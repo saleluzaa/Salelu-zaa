@@ -42,6 +42,15 @@ const Index = () => {
               size="lg" 
               variant="outline" 
               className="text-lg px-8"
+              onClick={() => navigate('/demo')}
+            >
+              Try Demo
+            </Button>
+          </div>
+          <div className="mt-4">
+            <Button 
+              variant="link" 
+              className="text-muted-foreground"
               onClick={() => {
                 const link = document.createElement('a');
                 link.href = '/sample-sales-data.csv';
@@ -49,7 +58,7 @@ const Index = () => {
                 link.click();
               }}
             >
-              Download Sample Data
+              Or download sample data
             </Button>
           </div>
         </div>
