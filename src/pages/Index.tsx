@@ -34,9 +34,24 @@ const Index = () => {
           <p className="text-xl text-muted-foreground mb-8">
             Upload your sales data and get instant AI-powered predictions. No setup required.
           </p>
-          <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8">
-            Start Free Trial
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8">
+              Start Free Trial
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-lg px-8"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/sample-sales-data.csv';
+                link.download = 'sample-sales-data.csv';
+                link.click();
+              }}
+            >
+              Download Sample Data
+            </Button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
