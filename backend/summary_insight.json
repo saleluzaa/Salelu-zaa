@@ -1,0 +1,10 @@
+{
+    "best_menu": "Latte",
+    "best_menu_total_revenue": 26875.3,
+    "worst_menu": "Espresso",
+    "best_day_of_week": "Tue",
+    "worst_day_of_week": "Sun",
+    "best_hour": "10:00",
+    "worst_hour": "06:00",
+    "info": "Hourly sales generated from 'hour_of_day' column."
+}
