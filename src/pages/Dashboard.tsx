@@ -18,6 +18,10 @@ const Dashboard = () => {
   const [data, setData] = useState<SalesData[]>([]);
   const [stats, setStats] = useState({ total: 0, avg: 0, growth: 0 });
 
+  // 🔥 ใหม่: state สำหรับ AI process
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   useEffect(() => {
     const csvData = localStorage.getItem('salesData');
     if (!csvData) {
@@ -25,38 +29,69 @@ const Dashboard = () => {
       return;
     }
 
-    // Parse CSV and generate mock predictions
-    const lines = csvData.split('\n').slice(1);
-    const parsed: SalesData[] = [];
-    let total = 0;
+    const runPipeline = async () => {
+      // เริ่ม process เอไอ
+      setIsProcessing(true);
+      setProgress(0);
 
-    lines.forEach(line => {
-      const [date, , sales] = line.split(',');
-      if (date && sales) {
-        const value = parseFloat(sales);
-        parsed.push({ date: date.trim(), sales: value });
-        total += value;
+      // ทำให้ progress ค่อย ๆ ขึ้น (ปลอม ๆ) ระหว่างรอเอไอจริง
+      const intervalId = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) return prev; // ล็อกไว้ไม่ให้เกิน 90 ก่อนเอไอเสร็จ
+          return prev + 5;
+        });
+      }, 250);
+
+      try {
+        // 1) Parse CSV
+        const lines = csvData.split('\n').slice(1);
+        const parsed: SalesData[] = [];
+        let total = 0;
+
+        lines.forEach(line => {
+          const [date, , sales] = line.split(',');
+          if (date && sales) {
+            const value = parseFloat(sales);
+            parsed.push({ date: date.trim(), sales: value });
+            total += value;
+          }
+        });
+
+        // 2) สมมติว่าเรียก AI จริง (ตอนนี้ใช้ setTimeout แทน)
+        // ตรงนี้ในอนาคตเปลี่ยนเป็น fetch('/api/predict', { ... }) ได้เลย
+        await new Promise(resolve => setTimeout(resolve, 2000)); // จำลองเอไอคิด 2 วิ
+
+        // 3) Generate predictions (เหมือนเดิม)
+        const lastValue = parsed[parsed.length - 1]?.sales || 0;
+        const avg = total / parsed.length;
+        const growth = ((lastValue - avg) / avg) * 100;
+
+        for (let i = 1; i <= 5; i++) {
+          const predictedValue = lastValue * (1 + (growth / 100));
+          const futureDate = new Date();
+          futureDate.setMonth(futureDate.getMonth() + i);
+          parsed.push({
+            date: futureDate.toISOString().split('T')[0],
+            sales: Math.round(predictedValue),
+            predicted: true
+          });
+        }
+
+        setData(parsed);
+        setStats({ total, avg: Math.round(avg), growth: Math.round(growth) });
+
+        // 4) ดัน progress ไป 100% แล้วค่อยปิด
+        setProgress(100);
+        setTimeout(() => {
+          setIsProcessing(false);
+          setProgress(0);
+        }, 500);
+      } finally {
+        clearInterval(intervalId);
       }
-    });
+    };
 
-    // Generate predictions (simple moving average)
-    const lastValue = parsed[parsed.length - 1]?.sales || 0;
-    const avg = total / parsed.length;
-    const growth = ((lastValue - avg) / avg) * 100;
-
-    for (let i = 1; i <= 5; i++) {
-      const predictedValue = lastValue * (1 + (growth / 100));
-      const futureDate = new Date();
-      futureDate.setMonth(futureDate.getMonth() + i);
-      parsed.push({
-        date: futureDate.toISOString().split('T')[0],
-        sales: Math.round(predictedValue),
-        predicted: true
-      });
-    }
-
-    setData(parsed);
-    setStats({ total, avg: Math.round(avg), growth: Math.round(growth) });
+    runPipeline();
   }, [navigate]);
 
   const handleLogout = () => {
@@ -104,40 +139,64 @@ const Dashboard = () => {
       </nav>
 
       <main className="container mx-auto px-4 py-8">
+        {/* 🔥 ใหม่: AI processing bar */}
+        {isProcessing && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-1 text-sm text-muted-foreground">
+              <span>Running AI predictions...</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-accent transition-all duration-200"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Sales Dashboard</h1>
-          <p className="text-muted-foreground">AI-powered sales predictions and analytics</p>
+          <p className="text-muted-foreground">
+            AI-powered sales predictions and analytics
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card className={isProcessing ? 'opacity-60 pointer-events-none' : ''}>
             <CardHeader>
               <CardDescription>Total Sales</CardDescription>
-              <CardTitle className="text-3xl">${stats.total.toLocaleString()}</CardTitle>
+              <CardTitle className="text-3xl">
+                {isProcessing ? 'Calculating…' : `$${stats.total.toLocaleString()}`}
+              </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className={isProcessing ? 'opacity-60 pointer-events-none' : ''}>
             <CardHeader>
               <CardDescription>Average Sales</CardDescription>
-              <CardTitle className="text-3xl">${stats.avg.toLocaleString()}</CardTitle>
+              <CardTitle className="text-3xl">
+                {isProcessing ? 'Calculating…' : `$${stats.avg.toLocaleString()}`}
+              </CardTitle>
             </CardHeader>
           </Card>
-          <Card>
+          <Card className={isProcessing ? 'opacity-60 pointer-events-none' : ''}>
             <CardHeader>
               <CardDescription>Growth Rate</CardDescription>
-              <CardTitle className="text-3xl text-accent">{stats.growth}%</CardTitle>
+              <CardTitle className="text-3xl text-accent">
+                {isProcessing ? 'Calculating…' : `${stats.growth}%`}
+              </CardTitle>
             </CardHeader>
           </Card>
         </div>
 
-        <Card className="mb-8">
+        <Card className={isProcessing ? 'opacity-60 pointer-events-none' : ''}>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Sales Trend & Predictions</CardTitle>
                 <CardDescription>Historical data and AI predictions</CardDescription>
               </div>
-              <Button onClick={handleDownload} variant="outline">
+              <Button onClick={handleDownload} variant="outline" disabled={isProcessing}>
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </Button>
