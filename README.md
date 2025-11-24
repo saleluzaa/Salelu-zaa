@@ -63,8 +63,3 @@ npm run dev
 -   **Frontend**: Node.js (Vite / React or similar)
 -   **Communication**: REST API
 
-------------------------------------------------------------------------
-
-## 🧪 Ready, Set, Go
-
-Once both services are up, your project is fully operational.
