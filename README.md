@@ -37,15 +37,8 @@ pip install -r requirements.txt
 ### 4. **Run FastAPI Server**
 
 ``` bash
-python api.py
+fastapi dev api.py
 ```
-
-Or:
-
-``` bash
-uvicorn api:app --reload
-```
-
 ------------------------------------------------------------------------
 
 ## 🎨 Frontend Setup (Node.js)
